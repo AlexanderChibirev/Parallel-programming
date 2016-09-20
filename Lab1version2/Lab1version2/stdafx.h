@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <Windows.h>
 #include <time.h>
+#include <vector>
+#include <iostream>
 
 
 // TODO: Установите здесь ссылки на дополнительные заголовки, требующиеся для программы

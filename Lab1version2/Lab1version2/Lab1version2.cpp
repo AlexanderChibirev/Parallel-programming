@@ -3,65 +3,57 @@
 
 #include "stdafx.h"
 
-const int MATRIX_SIZE = 3;
+const int MATRIX_SIZE = 31;
+const double EPS = 1E-9;
 
+using namespace std;
 
-struct row
+int GetRang(std::vector<vector<float>> &matrix)
 {
-	int value[MATRIX_SIZE];
-	int result;
-	int rnd;
-};
+	int rank = MATRIX_SIZE;
+	vector<bool> line_used(MATRIX_SIZE);
+	for (int i = 0; i < MATRIX_SIZE; ++i)
+	{
+		int j;
+		for (j = 0; j < MATRIX_SIZE; ++j)
+			if (!line_used[j] && abs(matrix[j][i]) > EPS)
+				break;
+		if (j == MATRIX_SIZE)
+			--rank;
+		else 
+		{
+			line_used[j] = true;
+			for (int p = i + 1; p< MATRIX_SIZE; ++p)
+				matrix[j][p] /= matrix[j][i];
+			for (int k = 0; k< MATRIX_SIZE; ++k)
+				if (k != j && abs(matrix[k][i]) > EPS)
+					for (int p = i + 1; p< MATRIX_SIZE; ++p)
+						matrix[k][p] -= matrix[j][p] * matrix[k][i];
+		}
+	}
+	return rank;
+}
 
-DWORD WINAPI generateAndCalc(void *data)
+
+vector<vector<float>> GenerateMatrix()
 {
-	//преобразуем полученные данные к типу структуры
-	row *r = (row *)data;
-	//инициализируем генератор случайных чисел полученным числом
-	srand(r->rnd);
-	//генерируем элементы строки
+	vector<vector<float>> matrix(MATRIX_SIZE);
+
 	for (int i = 0; i < MATRIX_SIZE; i++)
 	{
-		r->value[i] = rand() % 10;
+		for (int j = 0; j< MATRIX_SIZE; j++)
+		{
+			matrix[i].push_back(rand() % 1009);
+			cout << matrix[i][j] << '\t';
+		}
+		cout << '\n';
 	}
-	//находим произведение нечетных элементов
-	r->result = 1;
-	for (int i = 0; i < MATRIX_SIZE; i += 2)
-	{
-		r->result *= r->value[i];
-	}
-	return 0;
+	return matrix;
 }
 
 int main()
 {
-	//инициализируем генератор случайных чисел
-	srand(time(NULL));
-	//определяем дескрипторы потоков,
-	//идентификаторы потоков и структуры для строк матрицы
-	HANDLE thread[MATRIX_SIZE];
-	DWORD thrId[MATRIX_SIZE];
-	row rows[MATRIX_SIZE];
-
-	for (int i = 0; i < MATRIX_SIZE; i++)
-	{
-		//генерируем случайные числа для каждой строки
-		rows[i].rnd = rand();
-		//создаем потоки
-		thread[i] = CreateThread(NULL, 0, &generateAndCalc, &rows[i], 0, &thrId[i]);
-	}
-	//ждем, пока все эти потоки завершатся
-	WaitForMultipleObjects(MATRIX_SIZE, thread, TRUE, INFINITE);
-	//выводим результат работы программы на экран
-	for (int i = 0; i < MATRIX_SIZE; i++)
-	{
-		for (int j = 0; j < MATRIX_SIZE; j++)
-		{
-			printf(" %d", rows[i].value[j]);
-		}
-		printf(" | multipl = %d\n", rows[i].result);
-	}
-
+	cout << GetRang(GenerateMatrix());
 	return 0;
 }
 
