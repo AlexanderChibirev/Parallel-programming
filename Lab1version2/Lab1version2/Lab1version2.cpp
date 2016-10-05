@@ -3,19 +3,12 @@
 
 #include "stdafx.h"
 #include <ctime>
-
-const int MATRIX_SIZE = 500;
-const double EPS = 1E-9;
+#include "Matrix.h"
+#include "Difinition.h"
 
 using namespace std;
 
-struct row
-{
-	int value[MATRIX_SIZE];
-	int rnd;
-};
-
-int GetRang(std::vector<vector<float>> &matrix)
+int GetRang(vector<vector<float>> &matrix)
 {
 	int rank = MATRIX_SIZE;
 	vector<bool> line_used(MATRIX_SIZE);
@@ -30,10 +23,10 @@ int GetRang(std::vector<vector<float>> &matrix)
 		else 
 		{
 			line_used[j] = true;
-			for (int p = i + 1; p< MATRIX_SIZE; ++p)
+			for (int p = i + 1; p< MATRIX_SIZE; ++p)// ÔÓıÓ‰ËÏÒˇ ÔÓ ÎËÌËË
 				matrix[j][p] /= matrix[j][i];
 			for (int k = 0; k< MATRIX_SIZE; ++k)
-				if (k != j && abs(matrix[k][i]) > EPS)
+				if (k != j && abs(matrix[k][i]) > EPS)//Ë ·ÓÎ¸¯Â 1
 					for (int p = i + 1; p< MATRIX_SIZE; ++p)
 						matrix[k][p] -= matrix[j][p] * matrix[k][i];
 		}
@@ -50,22 +43,9 @@ vector<vector<float>> GenerateMatrix()
 		for (int j = 0; j< MATRIX_SIZE; j++)
 		{
 			matrix[i].push_back(rand() % 10);
-			//cout << matrix[i][j] << '\t';
 		}
-		//cout << '\n';
 	}
 	return matrix;
-}
-
-DWORD WINAPI GenerateMatrix(void *data)
-{
-	row *r = (row *)data;
-	srand(r->rnd);
-	for (int i = 0; i < MATRIX_SIZE; i++)
-	{
-		r->value[i] = (rand() % 10);
-	}
-	return 0;
 }
 
 void StartProgrammWithoutMultithreading() 
@@ -73,7 +53,8 @@ void StartProgrammWithoutMultithreading()
 	cout << "======================================" << endl;
 	cout << "======= Without Multithreading =======" << endl;
 	unsigned int start_time = clock();
-	cout << "rang: " << GetRang(GenerateMatrix()) << endl;
+
+	//cout << "rang: " << GetRang(GenerateMatrix()) << endl;
 	/////////////////////////////////////////////////
 	unsigned int end_time = clock();
 	unsigned int search_time = end_time - start_time;
@@ -82,19 +63,11 @@ void StartProgrammWithoutMultithreading()
 	cout << "======================================" << endl;
 	cout << "======== With Multithreading =========" << endl;
 }
-void StartProgrammWithMultithreading() 
+void StartProgrammWithMultithreading(const int quantityStream)
 {
 	unsigned int  start_time = clock();
-	srand(time(NULL));
-	HANDLE thread[MATRIX_SIZE];
-	DWORD thrId[MATRIX_SIZE];
-	row rows[MATRIX_SIZE];
-	for (int i = 0; i < MATRIX_SIZE; i++)
-	{
-		rows[i].rnd = rand();
-		thread[i] = CreateThread(NULL, 0, &GenerateMatrix, &rows[i], 0, &thrId[i]);
-	}
-	WaitForMultipleObjects(MATRIX_SIZE, thread, TRUE, INFINITE);
+	Matrix matrix(quantityStream);
+	matrix.GetRank();
 	unsigned int end_time = clock();
 	unsigned int  search_time = end_time - start_time;
 	cout << "time proccess: " << float(search_time) / 1000 << endl;
@@ -107,7 +80,8 @@ int main()
 	////////////¡≈« ÃÕŒ√ŒœŒ“Œ◊ÕŒ—“»//////////
 	StartProgrammWithoutMultithreading();
 	////////////C ÃÕŒ√ŒœŒ“Œ◊ÕŒ—“‹ﬁ///////////
-	StartProgrammWithMultithreading();
+	const int quantityStream = 1;
+	StartProgrammWithMultithreading(quantityStream);
 	return 0;
 }
 
