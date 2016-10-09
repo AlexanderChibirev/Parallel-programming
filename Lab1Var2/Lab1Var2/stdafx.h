@@ -9,11 +9,11 @@
 
 #include <stdio.h>
 #include <tchar.h>
-#include <stdio.h>
 #include <Windows.h>
-#include <time.h>
+#include <tchar.h>
 #include <vector>
 #include <iostream>
+#include <memory>
 
 
 // TODO: Установите здесь ссылки на дополнительные заголовки, требующиеся для программы
