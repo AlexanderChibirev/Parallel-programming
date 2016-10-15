@@ -67,7 +67,7 @@ int main()
 	////////////аег лмнцнонрнвмнярх//////////
 	StartProgrammWithoutMultithreading(matrix);
 	////////////C лмнцнонрнвмнярэч///////////
-	const int quantityStream = 2;
+	const int quantityStream = 3;
 	StartProgrammWithMultithreading(quantityStream, matrix);
     return 0;
 }

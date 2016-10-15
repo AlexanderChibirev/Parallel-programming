@@ -21,6 +21,10 @@ CMatrixParallel::CMatrixParallel(const int quantityThread, std::vector<std::vect
 {
 	m_matrixSize = matrix.size();
 	m_inverseData.resize(m_matrixSize);
+	for (int i = 0; i < m_matrixSize; i++)
+	{
+		m_inverseData[i].resize(m_matrixSize);
+	}
 	FillThreadsChargeMap();
 }
 
@@ -29,11 +33,11 @@ DWORD CMatrixParallel::GetDeterminantTread(PVOID pvParam)
 {
 	auto threadNumber = *static_cast<int*>(pvParam);
 	auto linesNumbers = m_threadsChargeMap.at(threadNumber);
-	for (auto it = linesNumbers.begin(); it != linesNumbers.end(); ++it)
+	for (auto &it: linesNumbers)
 	{
 		for (size_t j = 0; j < m_matrixSize; ++j)
 		{
-			m_inverseData[j][*it] = (m_coaf[*it][j] / m_det);
+			m_inverseData[j][it] = (m_coaf[it][j] / m_det);
 		}
 	}
 	return 0;
@@ -42,8 +46,6 @@ DWORD CMatrixParallel::GetDeterminantTread(PVOID pvParam)
 
 std::vector<std::vector<float>> CMatrixParallel::GetInverseMatrix()
 {
-	
-
 	HANDLE *hThreads = *std::make_shared<HANDLE*>(new HANDLE[m_quantityThread]);
 	DWORD *dwThreadsId = *std::make_shared<DWORD*>(new DWORD[m_quantityThread]);
 	std::vector<std::vector<float>> cofM(m_matrixSize, std::vector<float>(m_matrixSize));
@@ -51,7 +53,7 @@ std::vector<std::vector<float>> CMatrixParallel::GetInverseMatrix()
 	m_det = GetDeterminant();
 	cofactorMatrix = this->CoFactor();
 	m_coaf = cofactorMatrix.m_pData;
-	for (int i = 1; i <= m_quantityThread; ++i)
+	for (int i = 0; i < m_quantityThread; i++)
 	{
 		hThreads[i - 1] = CreateThread(NULL, 0, StartMultithreadedCalculator, (PVOID)&(std::make_pair(this, i)), 0, &dwThreadsId[i - 1]);
 	}
@@ -65,7 +67,7 @@ std::vector<std::vector<float>> CMatrixParallel::GetInverseMatrix()
 void CMatrixParallel::FillThreadsChargeMap()
 {
 	std::pair<int, int> matrixSize{ m_pData.size(), m_pData[0].size() };
-	for (size_t i = 1; i <= m_quantityThread; i++)
+	for (size_t i = 0; i <= m_quantityThread; i++)
 	{
 		m_threadsChargeMap.emplace(i, std::vector<size_t>());
 	}
