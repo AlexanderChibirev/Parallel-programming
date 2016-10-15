@@ -3,7 +3,6 @@
 
 #include "stdafx.h"
 
-#include "Matrix.h"
 #include "MatrixSuccessively.h"
 #include "MatrixParallel.h"
 
@@ -11,7 +10,7 @@
 
 
 using namespace std;
-const int MATRIX_SIZE = 6;
+const int MATRIX_SIZE = 3;
 
 
 void FillSimulatedInput(std::vector<std::vector<float>> &matrix)
@@ -24,6 +23,7 @@ void FillSimulatedInput(std::vector<std::vector<float>> &matrix)
 		}
 	}
 }
+
 void OutputMatrix(std::vector<std::vector<float>> &matrix)
 {
 	for (auto &row : matrix)

@@ -146,7 +146,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IMatrix.h" />
-    <ClInclude Include="Matrix.h" />
     <ClInclude Include="MatrixParallel.h" />
     <ClInclude Include="MatrixSuccessively.h" />
     <ClInclude Include="stdafx.h" />
@@ -154,7 +153,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Lab1Var2.cpp" />
-    <ClCompile Include="Matrix.cpp" />
     <ClCompile Include="MatrixParallel.cpp" />
     <ClCompile Include="MatrixSuccessively.cpp" />
     <ClCompile Include="stdafx.cpp">

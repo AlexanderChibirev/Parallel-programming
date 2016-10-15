@@ -25,19 +25,27 @@ class CMatrixParallel : IMatrix
 public:
 	CMatrixParallel(const int quantityThread, std::vector<std::vector<float>> &matrix);
 	std::vector<std::vector<float>> GetInverseMatrix() override;
-	std::vector<std::vector<float>> m_pData;
+	float GetDeterminant();
+	CMatrixParallel CoFactor();
+	DWORD WINAPI GetDeterminantTread(PVOID pvParam);
+
 private:
 	int m_matrixSize;
 	int m_quantityThread;
-
-	CMatrixParallel CoFactor();
+	
 	static DWORD WINAPI InverseColumnMatrix(void *pvParam);
 	static DWORD WINAPI DeterminantProcessThenMatrixSizeMoreFive(PVOID pvParam);
-	float GetDeterminant();
+	
 	float SearchDetThenMatrixSizeEqualThree(std::vector<std::vector<float>> &pd);
 	float SearchDetThenMatrixSizeEqualFour();
 	float SearchDetThenMatrixSizeEqualFive();
-	
+	static DWORD WINAPI CalculateMatrixCofactors(PVOID pvParam);
+	void FillThreadsChargeMap();
+	std::vector<std::vector<float>> m_pData;
+	std::vector<std::vector<float>> m_inverseData;
+	std::map<size_t, std::vector<size_t>> m_threadsChargeMap;
+	float m_det;
+	std::vector<std::vector<float>> m_coaf;
 };
 
 struct DeterminantProcess
@@ -55,4 +63,18 @@ struct DeterminantProcess
 	std::vector<std::vector<float>> m_pData;
 	int m_DIM;
 	int m_k;
+};
+
+struct RangesForMatrix
+{
+	RangesForMatrix(int fromRow = 0, int fromColumn = 0, int toRow = 0, int toColumn = 0)
+		: m_toRow(toRow)
+		, m_toColumn(toRow)
+		, m_fromRow(fromRow)
+		, m_fromColumn(fromColumn)
+	{}
+	int m_toRow;
+	int m_toColumn;
+	int m_fromRow;
+	int m_fromColumn;
 };

@@ -1,5 +1,18 @@
 #include "stdafx.h"
 #include "MatrixParallel.h"
+#include "IMatrix.h"
+
+
+namespace
+{
+	DWORD WINAPI StartMultithreadedCalculator(PVOID pvParam)
+	{
+		auto data = static_cast<std::pair<CMatrixParallel*, int>*>(pvParam);
+		data->first->GetDeterminantTread((PVOID)&data->second);
+		return 0;
+	}
+}
+
 
 
 CMatrixParallel::CMatrixParallel(const int quantityThread, std::vector<std::vector<float>> &matrix)
@@ -7,39 +20,65 @@ CMatrixParallel::CMatrixParallel(const int quantityThread, std::vector<std::vect
 	m_pData(matrix)
 {
 	m_matrixSize = matrix.size();
+	m_inverseData.resize(m_matrixSize);
+	FillThreadsChargeMap();
+}
+
+
+DWORD CMatrixParallel::GetDeterminantTread(PVOID pvParam)
+{
+	auto threadNumber = *static_cast<int*>(pvParam);
+	auto linesNumbers = m_threadsChargeMap.at(threadNumber);
+	for (auto it = linesNumbers.begin(); it != linesNumbers.end(); ++it)
+	{
+		for (size_t j = 0; j < m_matrixSize; ++j)
+		{
+			m_inverseData[j][*it] = (m_coaf[*it][j] / m_det);
+		}
+	}
+	return 0;
 }
 
 
 std::vector<std::vector<float>> CMatrixParallel::GetInverseMatrix()
 {
+	
+
+	HANDLE *hThreads = *std::make_shared<HANDLE*>(new HANDLE[m_quantityThread]);
+	DWORD *dwThreadsId = *std::make_shared<DWORD*>(new DWORD[m_quantityThread]);
 	std::vector<std::vector<float>> cofM(m_matrixSize, std::vector<float>(m_matrixSize));
-	std::vector<std::vector<float>> invM(m_matrixSize, std::vector<float>(m_matrixSize));
 	CMatrixParallel cofactorMatrix(m_quantityThread, cofM);
-	CMatrixParallel inverseMatrix(m_quantityThread, invM);
-	// to find out Determinant
-	float det = GetDeterminant();
+	m_det = GetDeterminant();
 	cofactorMatrix = this->CoFactor();
-	// inv = transpose of cofactor / Determinant
-	DWORD dw;
-	std::vector<DWORD> dwThreadId(m_quantityThread);
-	std::vector<HANDLE> hThread;
-	ColumnInverse columnInverse(inverseMatrix.m_pData, cofactorMatrix.m_pData, 0, det, m_matrixSize);
-	int count = 0;
-	for (int row = 0; row < m_matrixSize; ++row)
+	m_coaf = cofactorMatrix.m_pData;
+	for (int i = 1; i <= m_quantityThread; ++i)
 	{
-		auto th = CreateThread(NULL, 0, &InverseColumnMatrix, &columnInverse, 0, &dwThreadId[count]);
-		hThread.push_back(th);
-		if (m_quantityThread == count + 1)
-		{
-			dw = WaitForMultipleObjects(m_quantityThread, hThread.data(), TRUE, INFINITE);
-			count = 0;
-			continue;
-		}
-		count++;
+		hThreads[i - 1] = CreateThread(NULL, 0, StartMultithreadedCalculator, (PVOID)&(std::make_pair(this, i)), 0, &dwThreadsId[i - 1]);
 	}
-	dw = WaitForMultipleObjects(m_quantityThread, hThread.data(), TRUE, INFINITE);//может нужно будет удалить
-	return columnInverse.m_inverseMatrix;
+	WaitForMultipleObjects(m_quantityThread, hThreads, TRUE, INFINITE);
+	// to find out Determinant
+	
+	// inv = transpose of cofactor / Determinant
+	return m_inverseData;
 }
+
+void CMatrixParallel::FillThreadsChargeMap()
+{
+	std::pair<int, int> matrixSize{ m_pData.size(), m_pData[0].size() };
+	for (size_t i = 1; i <= m_quantityThread; i++)
+	{
+		m_threadsChargeMap.emplace(i, std::vector<size_t>());
+	}
+	for (size_t i = 0, threadNumber = 1; i != matrixSize.first; i++, threadNumber++)
+	{
+		if (threadNumber > m_quantityThread)
+		{
+			threadNumber = 1;
+		}
+		m_threadsChargeMap.at(threadNumber).push_back(i);
+	}
+}
+
 
 
 DWORD CMatrixParallel::InverseColumnMatrix(void  *pvParam)
@@ -89,35 +128,26 @@ float CMatrixParallel::GetDeterminant()
 			std::vector<std::vector<float>> matrix(DIM - 1, std::vector<float>(DIM - 1));
 			temp.push_back(CMatrixParallel(m_quantityThread, matrix));
 		}
-		DWORD dw;
-		std::vector<DWORD> dwThreadId(m_quantityThread);
-		std::vector<HANDLE> hThread;
-		DeterminantProcess determinantProcess(temp, this->m_pData, DIM, 0);
-		int count = 0;
-		//std::pair<DeterminantProcess,int> deter;
-		//int countThread = 0;
-		//deter = std::make_pair(determinantProcess, countThread);
-		for (int k = 0; k < DIM; ++k)
+		for (int k = 0; k < DIM; k++)
 		{
-			auto th = CreateThread(NULL, 0, &DeterminantProcessThenMatrixSizeMoreFive, (PVOID)&(std::make_pair(determinantProcess, k)), 0, &dwThreadId[count]);
-			hThread.push_back(th);
-			//deter.second++;
-			if (m_quantityThread == count + 1)
+			for (int i = 1; i < DIM; i++)
 			{
-				WaitForMultipleObjects(m_quantityThread, hThread.data(), TRUE, INFINITE);
-				count = 0;
-				continue;
+				int j1 = 0;
+				for (int j = 0; j < DIM; j++)
+				{
+					if (k == j)
+						continue;
+					temp[k].m_pData[i - 1][j1++] = this->m_pData[i][j];
+				}
 			}
-			++count;
 		}
-		WaitForMultipleObjects(m_quantityThread, hThread.data(), TRUE, INFINITE);
 		float det = 0;
 		for (int k = 0; k < DIM; k++)
 		{
 			if ((k % 2) == 0)
-				det = det + (determinantProcess.m_pData[0][k] * determinantProcess.m_temp[k].GetDeterminant());
+				det = det + (this->m_pData[0][k] * temp[k].GetDeterminant());
 			else
-				det = det - (determinantProcess.m_pData[0][k] * determinantProcess.m_temp[k].GetDeterminant());
+				det = det - (this->m_pData[0][k] * temp[k].GetDeterminant());
 		}
 		return det;
 	}
@@ -132,13 +162,13 @@ DWORD CMatrixParallel::DeterminantProcessThenMatrixSizeMoreFive(PVOID pvParam)
 	int k = data->second;
 	for (int i = 1; i < data->first.m_DIM; i++)
 	{
-	/*	int j1 = 0;
+		/*	int j1 = 0;
 		for (int j = 0; j <  data->first.m_DIM; j++)
 		{
-			if (k == j)
-				continue;
-			int x = data->first.m_pData[i][j];
-			data->first.m_temp[k].m_pData[i - 1][j1++] = x;
+		if (k == j)
+		continue;
+		int x = data->first.m_pData[i][j];
+		data->first.m_temp[k].m_pData[i - 1][j1++] = x;
 		}*/
 	}
 	return 0;
@@ -146,19 +176,12 @@ DWORD CMatrixParallel::DeterminantProcessThenMatrixSizeMoreFive(PVOID pvParam)
 
 float CMatrixParallel::SearchDetThenMatrixSizeEqualThree(std::vector<std::vector<float>> &pd)
 {
-	float a = pd[0][0];
-	float b = pd[0][1];
-	float c = pd[0][2];
-	float d = pd[1][0];
-	float e = pd[1][1];
-	float f = pd[1][2];
-	float g = pd[2][0];
 	float h = pd[2][1];
 	float i = pd[2][2];
-	float det = (a * e * i + b * f * g + c * d * h);
-	det = det - a * f * h;
-	det = det - b * d * i;
-	det = det - c * e * g;
+	float det = (pd[0][0] * pd[1][1] * i + pd[0][1] * pd[1][2] * pd[2][0] + pd[0][2] * pd[1][0] * pd[2][1]);
+	det = det - pd[0][0] * pd[1][2] * pd[2][1];
+	det = det - pd[0][1] * pd[1][0] * i;
+	det = det - pd[0][2] * pd[1][1] * pd[2][0];
 	return det;
 }
 
@@ -179,8 +202,7 @@ float CMatrixParallel::SearchDetThenMatrixSizeEqualFour()
 			{
 				if (k == j)
 					continue;
-				temp[k].m_pData[i - 1][j1++]
-					= this->m_pData[i][j];
+				temp[k].m_pData[i - 1][j1++] = this->m_pData[i][j];
 			}
 		}
 	}
@@ -218,6 +240,11 @@ float CMatrixParallel::SearchDetThenMatrixSizeEqualFive()
 		- this->m_pData[0][3] * temp[3].GetDeterminant()
 		+ this->m_pData[0][4] * temp[4].GetDeterminant();
 	return det;
+}
+
+DWORD CMatrixParallel::CalculateMatrixCofactors(PVOID pvParam)
+{
+	return 0;
 }
 
 CMatrixParallel CMatrixParallel::CoFactor()

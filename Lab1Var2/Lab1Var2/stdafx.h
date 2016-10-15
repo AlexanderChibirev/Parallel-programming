@@ -14,6 +14,6 @@
 #include <vector>
 #include <iostream>
 #include <memory>
-
+#include <map>
 
 // TODO: Установите здесь ссылки на дополнительные заголовки, требующиеся для программы

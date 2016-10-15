@@ -75,25 +75,16 @@ float CMatrixSuccessively::GetDeterminant()
 
 float CMatrixSuccessively::SearchDetThenMatrixSizeEqualThree(std::vector<std::vector<float>> &pd)
 {
-	float a = pd[0][0];
-	float b = pd[0][1];
-	float c = pd[0][2];
-	float d = pd[1][0];
-	float e = pd[1][1];
-	float f = pd[1][2];
-	float g = pd[2][0];
-	float h = pd[2][1];
-	float i = pd[2][2];
-	float det = (a * e * i + b * f * g + c * d * h);
-	det = det - a * f * h;
-	det = det - b * d * i;
-	det = det - c * e * g;
+	float det = (pd[0][0] * pd[1][1] * pd[2][2] + pd[0][1] * pd[1][2] * pd[2][0] + pd[0][2] * pd[1][0] * pd[2][1]);
+	det = det - pd[0][0] * pd[1][2] * pd[2][1];
+	det = det - pd[0][1] * pd[1][0] * pd[2][2];
+	det = det - pd[0][2] * pd[1][1] * pd[2][0];
 	return det;
 }
 
 float CMatrixSuccessively::SearchDetThenMatrixSizeEqualFour()
 {
-	CMatrixSuccessively *temp[4];
+	std::vector<CMatrixSuccessively*> temp(4);
 	for (int i = 0; i < 4; i++)
 	{
 		std::vector<std::vector<float>> matrix(3, std::vector<float>(3));
