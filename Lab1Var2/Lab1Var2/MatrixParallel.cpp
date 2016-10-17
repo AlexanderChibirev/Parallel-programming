@@ -58,9 +58,7 @@ std::vector<std::vector<float>> CMatrixParallel::GetInverseMatrix()
 		hThreads[i - 1] = CreateThread(NULL, 0, StartMultithreadedCalculator, (PVOID)&(std::make_pair(this, i)), 0, &dwThreadsId[i - 1]);
 	}
 	WaitForMultipleObjects(m_quantityThread, hThreads, TRUE, INFINITE);
-	// to find out Determinant
 	
-	// inv = transpose of cofactor / Determinant
 	return m_inverseData;
 }
 
