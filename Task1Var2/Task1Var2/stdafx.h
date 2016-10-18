@@ -7,13 +7,16 @@
 
 #include "targetver.h"
 
+
 #include <stdio.h>
 #include <tchar.h>
+#include <conio.h>
 #include <Windows.h>
 #include <tchar.h>
 #include <vector>
 #include <iostream>
 #include <memory>
-#include <map>
+#include <vector>
+
 
 // TODO: Установите здесь ссылки на дополнительные заголовки, требующиеся для программы

@@ -1,9 +1,8 @@
 #include "stdafx.h"
 #include "MatrixSuccessively.h"
+#include "MiniMatrix.h"
 
-
-
-
+using namespace std;
 CMatrixSuccessively::CMatrixSuccessively(std::vector<std::vector<float>> matrix)
 	:m_pData(matrix)
 {

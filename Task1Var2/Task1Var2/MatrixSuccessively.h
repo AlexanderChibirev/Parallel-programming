@@ -16,4 +16,3 @@ private:
 	float SearchDetThenMatrixSizeEqualFour();
 	float SearchDetThenMatrixSizeEqualFive();
 };
-

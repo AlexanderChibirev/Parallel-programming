@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{04EBC035-EE65-43E1-980A-EC93A5450ACB}</ProjectGuid>
+    <ProjectGuid>{759963C0-5274-4E56-8EB9-3F3D875769B8}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Lab1Var2</RootNamespace>
+    <RootNamespace>Task1Var2</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -148,19 +148,23 @@
     <ClInclude Include="IMatrix.h" />
     <ClInclude Include="MatrixParallel.h" />
     <ClInclude Include="MatrixSuccessively.h" />
+    <ClInclude Include="Matrixs.h" />
+    <ClInclude Include="MiniMatrix.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Lab1Var2.cpp" />
     <ClCompile Include="MatrixParallel.cpp" />
     <ClCompile Include="MatrixSuccessively.cpp" />
+    <ClCompile Include="Matrixs.cpp" />
+    <ClCompile Include="MiniMatrix.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Task1Var2.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
