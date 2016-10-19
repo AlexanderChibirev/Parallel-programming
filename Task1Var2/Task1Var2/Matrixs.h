@@ -2,10 +2,9 @@
 
 using Matrix = std::vector<std::vector<float>>;
 
-struct SMatrixs
+struct MatrixData
 {
-	SMatrixs(std::vector<std::vector<float>> matrix);
-	SMatrixs();
+	MatrixData();
 	Matrix basicMatrix;
 	Matrix minorsMatrix;
 	Matrix copyBasicMatrix;

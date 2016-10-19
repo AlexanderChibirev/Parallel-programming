@@ -1,10 +1,10 @@
 #include "stdafx.h"
 #include "MatrixSuccessively.h"
-#include "MiniMatrix.h"
+#include "RangeForMatrix.h"
 
 using namespace std;
 CMatrixSuccessively::CMatrixSuccessively(std::vector<std::vector<float>> matrix)
-	:m_pData(matrix)
+	:m_baseMatrix(matrix)
 {
 		m_matrixSize = matrix.size();
 }
@@ -13,7 +13,7 @@ CMatrixSuccessively::CMatrixSuccessively(std::vector<std::vector<float>> matrix)
 float CMatrixSuccessively::GetDeterminant() 
 {
 	float det = 0;
-	std::vector<std::vector<float>> pd = m_pData;
+	std::vector<std::vector<float>> pd = m_baseMatrix;
 	switch (m_matrixSize)
 	{
 	case 2:
@@ -54,7 +54,7 @@ float CMatrixSuccessively::GetDeterminant()
 				{
 					if (k == j)
 						continue;
-					temp[k].m_pData[i - 1][j1++] = this->m_pData[i][j];
+					temp[k].m_baseMatrix[i - 1][j1++] = this->m_baseMatrix[i][j];
 				}
 			}
 		}
@@ -62,9 +62,9 @@ float CMatrixSuccessively::GetDeterminant()
 		for (int k = 0; k < DIM; k++)
 		{
 			if ((k % 2) == 0)
-				det = det + (this->m_pData[0][k] * temp[k].GetDeterminant());
+				det = det + (this->m_baseMatrix[0][k] * temp[k].GetDeterminant());
 			else
-				det = det - (this->m_pData[0][k] * temp[k].GetDeterminant());
+				det = det - (this->m_baseMatrix[0][k] * temp[k].GetDeterminant());
 		}
 		return det;
 	}
@@ -98,15 +98,15 @@ float CMatrixSuccessively::SearchDetThenMatrixSizeEqualFour()
 			{
 				if (k == j)
 					continue;
-				temp[k]->m_pData[i - 1][j1++]
-					= this->m_pData[i][j];
+				temp[k]->m_baseMatrix[i - 1][j1++]
+					= this->m_baseMatrix[i][j];
 			}
 		}
 	}
-	float det = this->m_pData[0][0] * temp[0]->GetDeterminant()
-		- this->m_pData[0][1] * temp[1]->GetDeterminant()
-		+ this->m_pData[0][2] * temp[2]->GetDeterminant()
-		- this->m_pData[0][3] * temp[3]->GetDeterminant();
+	float det = this->m_baseMatrix[0][0] * temp[0]->GetDeterminant()
+		- this->m_baseMatrix[0][1] * temp[1]->GetDeterminant()
+		+ this->m_baseMatrix[0][2] * temp[2]->GetDeterminant()
+		- this->m_baseMatrix[0][3] * temp[3]->GetDeterminant();
 	return det;
 }
 
@@ -127,15 +127,15 @@ float CMatrixSuccessively::SearchDetThenMatrixSizeEqualFive()
 			{
 				if (k == j)
 					continue;
-				temp[k]->m_pData[i - 1][j1++] = this->m_pData[i][j];
+				temp[k]->m_baseMatrix[i - 1][j1++] = this->m_baseMatrix[i][j];
 			}
 		}
 	}
-	float det = this->m_pData[0][0] * temp[0]->GetDeterminant()
-		- this->m_pData[0][1] * temp[1]->GetDeterminant()
-		+ this->m_pData[0][2] * temp[2]->GetDeterminant()
-		- this->m_pData[0][3] * temp[3]->GetDeterminant()
-		+ this->m_pData[0][4] * temp[4]->GetDeterminant();
+	float det = this->m_baseMatrix[0][0] * temp[0]->GetDeterminant()
+		- this->m_baseMatrix[0][1] * temp[1]->GetDeterminant()
+		+ this->m_baseMatrix[0][2] * temp[2]->GetDeterminant()
+		- this->m_baseMatrix[0][3] * temp[3]->GetDeterminant()
+		+ this->m_baseMatrix[0][4] * temp[4]->GetDeterminant();
 	return det;
 }
 
@@ -147,10 +147,10 @@ CMatrixSuccessively CMatrixSuccessively::CoFactor()
 		return cofactor;
 	else if (m_matrixSize == 2)
 	{
-		cofactor.m_pData[0][0] = m_pData[1][1];
-		cofactor.m_pData[0][1] = -m_pData[1][0];
-		cofactor.m_pData[1][0] = -m_pData[0][1];
-		cofactor.m_pData[1][1] = m_pData[0][0];
+		cofactor.m_baseMatrix[0][0] = m_baseMatrix[1][1];
+		cofactor.m_baseMatrix[0][1] = -m_baseMatrix[1][0];
+		cofactor.m_baseMatrix[1][0] = -m_baseMatrix[0][1];
+		cofactor.m_baseMatrix[1][1] = m_baseMatrix[0][0];
 		return cofactor;
 	}
 	else if (m_matrixSize >= 3)
@@ -178,7 +178,7 @@ CMatrixSuccessively CMatrixSuccessively::CoFactor()
 					{
 						if (k1 == i || k2 == j)
 							continue;
-						temp[k1][k2]->m_pData[i1][j1++]	= this->m_pData[i][j];
+						temp[k1][k2]->m_baseMatrix[i1][j1++]	= this->m_baseMatrix[i][j];
 					}
 					if (k1 != i)
 						i1++;
@@ -193,12 +193,12 @@ CMatrixSuccessively CMatrixSuccessively::CoFactor()
 			{
 				if (flagPositive == true)
 				{
-					cofactor.m_pData[k1][k2] = temp[k1][k2]->GetDeterminant();
+					cofactor.m_baseMatrix[k1][k2] = temp[k1][k2]->GetDeterminant();
 					flagPositive = false;
 				}
 				else
 				{
-					cofactor.m_pData[k1][k2] =- temp[k1][k2]->GetDeterminant();
+					cofactor.m_baseMatrix[k1][k2] =- temp[k1][k2]->GetDeterminant();
 					flagPositive = true;
 				}
 			}
@@ -227,9 +227,9 @@ std::vector<std::vector<float>> CMatrixSuccessively::GetInverseMatrix()
 	{
 		for (int j = 0; j < m_matrixSize; j++)
 		{
-			inverseMatrix.m_pData[j][i] = cofactorMatrix.m_pData[i][j] / det;
+			inverseMatrix.m_baseMatrix[j][i] = cofactorMatrix.m_baseMatrix[i][j] / det;
 		}
 	}
-	return inverseMatrix.m_pData;
+	return inverseMatrix.m_baseMatrix;
 }
 

@@ -1,13 +1,13 @@
 #include "stdafx.h"
 #include "MatrixParallel.h"
-#include "MiniMatrix.h"
+#include "RangeForMatrix.h"
 
 DWORD WINAPI CMatrixParallel::CalculateMatrixCofactors(PVOID pvParam)
 {
-	SMiniMatrix data = (*((SMiniMatrix *)pvParam));
-	for (size_t i = data.from_x; i != data.to_x; ++i)
+	RangeForMatrix data = (*((RangeForMatrix *)pvParam));
+	for (size_t i = data.m_fromRow; i != data.m_toRow; ++i)
 	{
-		for (size_t j = data.from_y; j != data.to_y; ++j)
+		for (size_t j = data.m_fromColumn; j != data.m_toColumn; ++j)
 		{
 			matrix->minorsMatrix[i][j] *= (int)pow(-1, int(i) + int(j) + 2);
 		}
@@ -17,10 +17,10 @@ DWORD WINAPI CMatrixParallel::CalculateMatrixCofactors(PVOID pvParam)
 
 DWORD WINAPI CMatrixParallel::CalculateTransposedMatrix(PVOID pvParam)
 {
-	SMiniMatrix data = (*((SMiniMatrix *)pvParam));
-	for (size_t i = data.from_x; i != data.to_x; ++i)
+	RangeForMatrix data = (*((RangeForMatrix *)pvParam));
+	for (size_t i = data.m_fromRow; i != data.m_toRow; ++i)
 	{
-		for (size_t j = data.from_y; j != data.to_y; ++j)
+		for (size_t j = data.m_fromColumn; j != data.m_toColumn; ++j)
 		{
 			matrix->basicMatrix[j][i] = matrix->minorsMatrix[i][j];
 		}
@@ -30,13 +30,17 @@ DWORD WINAPI CMatrixParallel::CalculateTransposedMatrix(PVOID pvParam)
 
 DWORD CMatrixParallel::CalculateMatrixMinors(PVOID pvParam)
 {
-	SMiniMatrix data = (*((SMiniMatrix *)pvParam));
+	RangeForMatrix data = (*((RangeForMatrix *)pvParam));
 	Matrix copyMatrix = matrix->basicMatrix;
-	for (size_t i = data.from_x; i != data.to_x; ++i)
+	for (size_t i = data.m_fromRow; i != data.m_toRow; ++i)
 	{
-		for (size_t j = data.from_y; j != data.to_y; ++j)
+		for (size_t j = data.m_fromColumn; j != data.m_toColumn; ++j)
 		{
-			Erase(copyMatrix, i, j);
+			copyMatrix.erase(copyMatrix.begin() + i);
+			for (size_t k = 0; k != copyMatrix.size(); ++k)
+			{
+				copyMatrix[k].erase(copyMatrix[k].begin() + j);
+			}
 			float res = GetDeterminantMatrix(copyMatrix);
 			matrix->minorsMatrix[i][j] = res;
 			copyMatrix = matrix->basicMatrix;
@@ -46,6 +50,33 @@ DWORD CMatrixParallel::CalculateMatrixMinors(PVOID pvParam)
 }
 
 
+float CMatrixParallel::GetDeterminantMatrix(Matrix matrix)
+{
+	float result = 0.f;
+	int count = 1;
+	Matrix oldMatrix(matrix);
+	size_t size = matrix.size();
+	for (size_t i = 0; i != size; ++i)
+	{
+		float number = matrix[0][i];
+		matrix.erase(matrix.begin() + 0);
+		for (size_t k = 0; k != matrix.size(); ++k)
+		{
+			matrix[k].erase(matrix[k].begin() + i);
+		}
+		if (matrix.size() == 2)
+		{
+			result += (number * powf(-1.f, float(1 + count++)) * (matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0]));
+		}
+		else
+		{
+			result += (number * powf(-1.f, float(1 + count++)) * GetDeterminantMatrix(matrix));
+		}
+		matrix = oldMatrix;
+	}
+	return result;
+}
+
 CMatrixParallel::CMatrixParallel(size_t numberThreads)
 	: m_threadsCount(numberThreads)
 {
@@ -54,7 +85,7 @@ CMatrixParallel::CMatrixParallel(size_t numberThreads)
 Matrix CMatrixParallel::GetInverseMatrix()
 {
 	float number = (GetDeterminantMatrix(matrix->basicMatrix));
-	m_matrix = (matrix->basicMatrix);
+	m_matrix.base = (matrix->basicMatrix);
 	CalculateMatrixMinors();
 	CalculateMatrixCofactors();
 	CalculateTransposedMatrix();
@@ -111,7 +142,7 @@ void CMatrixParallel::CalculateMatrixCofactors()
 			to_y = lengthByX + from_y >= matrix->basicMatrix.size() ? matrix->basicMatrix.size() : lengthByX + from_y;
 		}
 
-		auto th = CreateThread(NULL, 0, CalculateMatrixCofactors, (PVOID)&SMiniMatrix(from_x, from_y, to_x, to_y), 0, &dwThreadId[id - 1]);
+		auto th = CreateThread(NULL, 0, CalculateMatrixCofactors, (PVOID)&RangeForMatrix(from_x, from_y, to_x, to_y), 0, &dwThreadId[id - 1]);
 		hThread.push_back(th);
 		if (m_threadsCount - id - 1 == matrix->basicMatrix.size() - to_y + 1)
 		{
@@ -141,7 +172,7 @@ void CMatrixParallel::CalculateMatrixCofactors()
 		lengthByX = static_cast<size_t>(matrix->basicMatrix[0].size() / m_threadsCount) + 1;
 	}
 
-	CalculateMatrixCofactors((PVOID)&SMiniMatrix(0, 0, matrix->basicMatrix.size(), lengthByX));
+	CalculateMatrixCofactors((PVOID)&RangeForMatrix(0, 0, matrix->basicMatrix.size(), lengthByX));
 	dw = WaitForMultipleObjects(static_cast<DWORD>(m_threadsCount - 1), hThread.data(), TRUE, INFINITE);
 
 }
@@ -182,7 +213,7 @@ void CMatrixParallel::CalculateMatrixMinors()
 			to_y = lengthByX + from_y >= matrix->basicMatrix.size() ? matrix->basicMatrix.size() : lengthByX + from_y;
 		}
 
-		auto th = CreateThread(NULL, 0, CalculateMatrixMinors, (PVOID)&SMiniMatrix(from_x, from_y, to_x, to_y), 0, &dwThreadId[id - 1]);
+		auto th = CreateThread(NULL, 0, CalculateMatrixMinors, (PVOID)&RangeForMatrix(from_x, from_y, to_x, to_y), 0, &dwThreadId[id - 1]);
 		hThread.push_back(th);
 		if (m_threadsCount - id - 1 == matrix->basicMatrix.size() - to_y + 1)
 		{
@@ -212,7 +243,7 @@ void CMatrixParallel::CalculateMatrixMinors()
 		lengthByX = static_cast<size_t>(matrix->basicMatrix[0].size() / m_threadsCount) + 1;
 	}
 
-	CalculateMatrixMinors((PVOID)&SMiniMatrix(0, 0, matrix->basicMatrix.size(), lengthByX));
+	CalculateMatrixMinors((PVOID)&RangeForMatrix(0, 0, matrix->basicMatrix.size(), lengthByX));
 	dw = WaitForMultipleObjects(static_cast<DWORD>(m_threadsCount - 1), hThread.data(), TRUE, INFINITE);
 }
 
@@ -252,7 +283,7 @@ void CMatrixParallel::CalculateTransposedMatrix()
 			to_y = lengthByX + from_y >= matrix->basicMatrix.size() ? matrix->basicMatrix.size() : lengthByX + from_y;
 		}
 
-		auto th = CreateThread(NULL, 0, CalculateTransposedMatrix, (PVOID)&SMiniMatrix(from_x, from_y, to_x, to_y), 0, &dwThreadId[id - 1]);
+		auto th = CreateThread(NULL, 0, CalculateTransposedMatrix, (PVOID)&RangeForMatrix(from_x, from_y, to_x, to_y), 0, &dwThreadId[id - 1]);
 		hThread.push_back(th);
 		if (m_threadsCount - id - 1 == matrix->basicMatrix.size() - to_y + 1)
 		{
@@ -282,6 +313,6 @@ void CMatrixParallel::CalculateTransposedMatrix()
 		lengthByX = static_cast<size_t>(matrix->basicMatrix[0].size() / m_threadsCount) + 1;
 	}
 
-	CalculateTransposedMatrix((PVOID)&SMiniMatrix(0, 0, matrix->basicMatrix.size(), lengthByX));
+	CalculateTransposedMatrix((PVOID)&RangeForMatrix(0, 0, matrix->basicMatrix.size(), lengthByX));
 	dw = WaitForMultipleObjects(static_cast<DWORD>(m_threadsCount - 1), hThread.data(), TRUE, INFINITE);
 }

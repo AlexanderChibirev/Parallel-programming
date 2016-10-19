@@ -3,7 +3,7 @@
 
 using Matrix = std::vector<std::vector<float>>;
 
-static std::unique_ptr<SMatrixs> matrix = std::make_unique<SMatrixs>();
+static std::unique_ptr<MatrixData> matrix = std::make_unique<MatrixData>();
 
 class IMatrix
 {
