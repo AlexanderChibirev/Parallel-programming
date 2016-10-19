@@ -91,15 +91,15 @@ Matrix CMatrixParallel::GetInverseMatrix()
 	CalculateTransposedMatrix();
 	for (auto &row : matrix->basicMatrix)
 	{
-		for (auto &cell : row)
+		for (auto &column : row)
 		{
 			if (number < 0)
 			{
-				cell = -cell / -number;
+				column = -column / -number;
 			}
 			else
 			{
-				cell = cell / number;
+				column = column / number;
 			}
 		}
 	}
@@ -108,211 +108,211 @@ Matrix CMatrixParallel::GetInverseMatrix()
 
 void CMatrixParallel::CalculateMatrixCofactors()
 {
-	DWORD dw;
 	std::vector<DWORD> dwThreadId;
 	dwThreadId.resize(m_threadsCount - 1);
 	std::vector<HANDLE> hThread;
-
-	size_t lengthByX = static_cast<size_t>(matrix->basicMatrix[0].size() / m_threadsCount);
-	if (matrix->basicMatrix[0].size() % m_threadsCount > 0)
+	size_t matrixSizeForOneRow = matrix->basicMatrix[0].size();
+	size_t matrixSize = matrix->basicMatrix.size();
+	size_t lengthRow = static_cast<size_t>(matrixSizeForOneRow / m_threadsCount);
+	if (matrixSizeForOneRow % m_threadsCount > 0)
 	{
-		lengthByX = int(matrix->basicMatrix[0].size() / m_threadsCount) + 1;
+		lengthRow = size_t(matrixSizeForOneRow / m_threadsCount) + 1;
 	}
-	size_t lengthByY = matrix->basicMatrix[0].size();
-	size_t from_y = lengthByX;
-	if (matrix->basicMatrix.size() < m_threadsCount)
+	size_t lengthColumn = matrixSizeForOneRow;
+	size_t fromColumn = lengthRow;
+	if (matrixSize < m_threadsCount)
 	{
-		lengthByX = 1;
-		if (matrix->basicMatrix[0].size() % m_threadsCount > 0)
+		lengthRow = 1;
+		if (matrixSizeForOneRow % m_threadsCount > 0)
 		{
-			lengthByY = static_cast<size_t>(matrix->basicMatrix.size() / int((m_threadsCount / matrix->basicMatrix[0].size()) + 1));
+			lengthColumn = static_cast<size_t>(matrixSize / size_t((m_threadsCount / matrixSizeForOneRow) + 1));
 		}
 		else
 		{
-			lengthByY = static_cast<size_t>(matrix->basicMatrix.size() / int(m_threadsCount / matrix->basicMatrix[0].size()));
+			lengthColumn = static_cast<size_t>(matrixSize / size_t(m_threadsCount / matrixSizeForOneRow));
 		}
 	}
-	size_t to_x = lengthByY;
-	size_t from_x = 0;
-	size_t to_y;
+	size_t toRow = lengthColumn;
+	size_t fromRow = 0;
+	size_t toColumn;
 	for (size_t id = 1; id != m_threadsCount; ++id)
 	{
 		if (id + 1 != m_threadsCount)
 		{
-			to_y = lengthByX + from_y >= matrix->basicMatrix.size() ? matrix->basicMatrix.size() : lengthByX + from_y;
+			toColumn = lengthRow + fromColumn >= matrixSize ? matrixSize : lengthRow + fromColumn;
 		}
 
-		auto th = CreateThread(NULL, 0, CalculateMatrixCofactors, (PVOID)&RangeForMatrix(from_x, from_y, to_x, to_y), 0, &dwThreadId[id - 1]);
+		auto th = CreateThread(NULL, 0, CalculateMatrixCofactors, (PVOID)&RangeForMatrix(fromRow, fromColumn, toRow, toColumn), 0, &dwThreadId[id - 1]);
 		hThread.push_back(th);
-		if (m_threadsCount - id - 1 == matrix->basicMatrix.size() - to_y + 1)
+		if (m_threadsCount - id - 1 == matrixSize - toColumn + 1)
 		{
-			lengthByX = 1;
+			lengthRow = 1;
 		}
-		from_y += lengthByX;
-		if (from_y == matrix->basicMatrix.size() && id + 1 != m_threadsCount)
+		fromColumn += lengthRow;
+		if (fromColumn == matrixSize && id + 1 != m_threadsCount)
 		{
-			from_y = 1;
-			to_x += lengthByY;
-			from_x += lengthByY;
-			if (m_threadsCount - id - 1 <= matrix->basicMatrix.size() || to_x > matrix->basicMatrix.size())
+			fromColumn = 1;
+			toRow += lengthColumn;
+			fromRow += lengthColumn;
+			if (m_threadsCount - id - 1 <= matrixSize || toRow > matrixSize)
 			{
-				to_x = matrix->basicMatrix.size();
+				toRow = matrixSize;
 			}
 
 		}
 		if (id + 1 == m_threadsCount - 1)
 		{
-			to_y = matrix->basicMatrix.size();
+			toColumn = matrixSize;
 		}
 		if (!hThread.data()) std::cout << "Error!" << std::endl;
 	}
-	lengthByX = static_cast<size_t>(matrix->basicMatrix[0].size() / m_threadsCount);
-	if (matrix->basicMatrix[0].size() % m_threadsCount > 0)
+	lengthRow = static_cast<size_t>(matrixSizeForOneRow / m_threadsCount);
+	if (matrixSizeForOneRow % m_threadsCount > 0)
 	{
-		lengthByX = static_cast<size_t>(matrix->basicMatrix[0].size() / m_threadsCount) + 1;
+		lengthRow = static_cast<size_t>(matrixSizeForOneRow / m_threadsCount) + 1;
 	}
 
-	CalculateMatrixCofactors((PVOID)&RangeForMatrix(0, 0, matrix->basicMatrix.size(), lengthByX));
-	dw = WaitForMultipleObjects(static_cast<DWORD>(m_threadsCount - 1), hThread.data(), TRUE, INFINITE);
-
+	CalculateMatrixCofactors((PVOID)&RangeForMatrix(0, 0, matrix->basicMatrix.size(), lengthRow));
+	WaitForMultipleObjects(static_cast<DWORD>(m_threadsCount - 1), hThread.data(), TRUE, INFINITE);
 }
 
 void CMatrixParallel::CalculateMatrixMinors()
 {
-	DWORD dw;
+
 	std::vector<DWORD> dwThreadId;
 	dwThreadId.resize(m_threadsCount - 1);
 	std::vector<HANDLE> hThread;
-
-	size_t lengthByX = static_cast<size_t>(matrix->basicMatrix[0].size() / m_threadsCount);
-	if (matrix->basicMatrix[0].size() % m_threadsCount > 0)
+	size_t matrixSizeForOneRow = matrix->basicMatrix[0].size();
+	size_t matrixSize = matrix->basicMatrix.size();
+	size_t lengthRow = static_cast<size_t>(matrixSizeForOneRow / m_threadsCount);
+	if (matrixSizeForOneRow % m_threadsCount > 0)
 	{
-		lengthByX = int(matrix->basicMatrix[0].size() / m_threadsCount) + 1;
+		lengthRow = int(matrixSizeForOneRow / m_threadsCount) + 1;
 	}
-	size_t lengthByY = matrix->basicMatrix[0].size();
-	size_t from_y = lengthByX;
-	if (matrix->basicMatrix.size() < m_threadsCount)
+	size_t lengthColumn = matrixSizeForOneRow;
+	size_t from_y = lengthRow;
+	if (matrixSize < m_threadsCount)
 	{
-		lengthByX = 1;
-		if (matrix->basicMatrix[0].size() % m_threadsCount > 0)
+		lengthRow = 1;
+		if (matrixSizeForOneRow % m_threadsCount > 0)
 		{
-			lengthByY = static_cast<size_t>(matrix->basicMatrix.size() / int((m_threadsCount / matrix->basicMatrix[0].size()) + 1));
+			lengthColumn = static_cast<size_t>(matrixSize / size_t((m_threadsCount / matrixSizeForOneRow) + 1));
 		}
 		else
 		{
-			lengthByY = static_cast<size_t>(matrix->basicMatrix.size() / int(m_threadsCount / matrix->basicMatrix[0].size()));
+			lengthColumn = static_cast<size_t>(matrixSize / size_t(m_threadsCount / matrixSizeForOneRow));
 		}
 	}
-	size_t to_x = lengthByY;
-	size_t from_x = 0;
-	size_t to_y;
+	size_t toRow = lengthColumn;
+	size_t fromRow = 0;
+	size_t toColumn;
 	for (size_t id = 1; id != m_threadsCount; ++id)
 	{
 		if (id + 1 != m_threadsCount)
 		{
-			to_y = lengthByX + from_y >= matrix->basicMatrix.size() ? matrix->basicMatrix.size() : lengthByX + from_y;
+			toColumn = lengthRow + from_y >= matrixSize ? matrixSize : lengthRow + from_y;
 		}
 
-		auto th = CreateThread(NULL, 0, CalculateMatrixMinors, (PVOID)&RangeForMatrix(from_x, from_y, to_x, to_y), 0, &dwThreadId[id - 1]);
+		auto th = CreateThread(NULL, 0, CalculateMatrixMinors, (PVOID)&RangeForMatrix(fromRow, from_y, toRow, toColumn), 0, &dwThreadId[id - 1]);
 		hThread.push_back(th);
-		if (m_threadsCount - id - 1 == matrix->basicMatrix.size() - to_y + 1)
+		if (m_threadsCount - id - 1 == matrixSize - toColumn + 1)
 		{
-			lengthByX = 1;
+			lengthRow = 1;
 		}
-		from_y += lengthByX;
-		if (from_y == matrix->basicMatrix.size() && id + 1 != m_threadsCount)
+		from_y += lengthRow;
+		if (from_y == matrixSize && id + 1 != m_threadsCount)
 		{
 			from_y = 1;
-			to_x += lengthByY;
-			from_x += lengthByY;
-			if (m_threadsCount - id - 1 <= matrix->basicMatrix.size() || to_x > matrix->basicMatrix.size())
+			toRow += lengthColumn;
+			fromRow += lengthColumn;
+			if (m_threadsCount - id - 1 <= matrixSize || toRow > matrixSize)
 			{
-				to_x = matrix->basicMatrix.size();
+				toRow = matrix->basicMatrix.size();
 			}
 
 		}
 		if (id + 1 == m_threadsCount - 1)
 		{
-			to_y = matrix->basicMatrix.size();
+			toColumn = matrix->basicMatrix.size();
 		}
 		if (!hThread.data()) std::cout << "Error!" << std::endl;
 	}
-	lengthByX = static_cast<size_t>(matrix->basicMatrix[0].size() / m_threadsCount);
-	if (matrix->basicMatrix[0].size() % m_threadsCount > 0)
+	lengthRow = static_cast<size_t>(matrixSizeForOneRow / m_threadsCount);
+	if (matrixSizeForOneRow % m_threadsCount > 0)
 	{
-		lengthByX = static_cast<size_t>(matrix->basicMatrix[0].size() / m_threadsCount) + 1;
+		lengthRow = static_cast<size_t>(matrixSizeForOneRow / m_threadsCount) + 1;
 	}
 
-	CalculateMatrixMinors((PVOID)&RangeForMatrix(0, 0, matrix->basicMatrix.size(), lengthByX));
-	dw = WaitForMultipleObjects(static_cast<DWORD>(m_threadsCount - 1), hThread.data(), TRUE, INFINITE);
+	CalculateMatrixMinors((PVOID)&RangeForMatrix(0, 0, matrix->basicMatrix.size(), lengthRow));
+	WaitForMultipleObjects(static_cast<DWORD>(m_threadsCount - 1), hThread.data(), TRUE, INFINITE);
 }
 
 void CMatrixParallel::CalculateTransposedMatrix()
 {
-	DWORD dw;
 	std::vector<DWORD> dwThreadId;
 	dwThreadId.resize(m_threadsCount - 1);
 	std::vector<HANDLE> hThread;
-
-	size_t lengthByX = static_cast<size_t>(matrix->basicMatrix[0].size() / m_threadsCount);
-	if (matrix->basicMatrix[0].size() % m_threadsCount > 0)
+	size_t matrixSizeForOneRow = matrix->basicMatrix[0].size();
+	size_t matrixSize = matrix->basicMatrix.size();
+	size_t lengthRow = static_cast<size_t>(matrixSizeForOneRow / m_threadsCount);
+	if (matrixSizeForOneRow % m_threadsCount > 0)
 	{
-		lengthByX = int(matrix->basicMatrix[0].size() / m_threadsCount) + 1;
+		lengthRow = int(matrixSizeForOneRow / m_threadsCount) + 1;
 	}
-	size_t lengthByY = matrix->basicMatrix[0].size();
-	size_t from_y = lengthByX;
-	if (matrix->basicMatrix.size() < m_threadsCount)
+	size_t lengthColumn = matrixSizeForOneRow;
+	size_t fromColumn = lengthRow;
+	if (matrixSize < m_threadsCount)
 	{
-		lengthByX = 1;
-		if (matrix->basicMatrix[0].size() % m_threadsCount > 0)
+		lengthRow = 1;
+		if (matrixSizeForOneRow % m_threadsCount > 0)
 		{
-			lengthByY = static_cast<size_t>(matrix->basicMatrix.size() / int((m_threadsCount / matrix->basicMatrix[0].size()) + 1));
+			lengthColumn = static_cast<size_t>(matrixSize / size_t((m_threadsCount / matrixSizeForOneRow) + 1));
 		}
 		else
 		{
-			lengthByY = static_cast<size_t>(matrix->basicMatrix.size() / int(m_threadsCount / matrix->basicMatrix[0].size()));
+			lengthColumn = static_cast<size_t>(matrixSize / size_t(m_threadsCount / matrixSizeForOneRow));
 		}
 	}
-	size_t to_x = lengthByY;
-	size_t from_x = 0;
-	size_t to_y;
+	size_t toRow = lengthColumn;
+	size_t fromRow = 0;
+	size_t toColumn;
 	for (size_t id = 1; id != m_threadsCount; ++id)
 	{
 		if (id + 1 != m_threadsCount)
 		{
-			to_y = lengthByX + from_y >= matrix->basicMatrix.size() ? matrix->basicMatrix.size() : lengthByX + from_y;
+			toColumn = lengthRow + fromColumn >= matrixSize ? matrixSize : lengthRow + fromColumn;
 		}
 
-		auto th = CreateThread(NULL, 0, CalculateTransposedMatrix, (PVOID)&RangeForMatrix(from_x, from_y, to_x, to_y), 0, &dwThreadId[id - 1]);
+		auto th = CreateThread(NULL, 0, CalculateTransposedMatrix, (PVOID)&RangeForMatrix(fromRow, fromColumn, toRow, toColumn), 0, &dwThreadId[id - 1]);
 		hThread.push_back(th);
-		if (m_threadsCount - id - 1 == matrix->basicMatrix.size() - to_y + 1)
+		if (m_threadsCount - id - 1 == matrixSize - toColumn + 1)
 		{
-			lengthByX = 1;
+			lengthRow = 1;
 		}
-		from_y += lengthByX;
-		if (from_y == matrix->basicMatrix.size() && id + 1 != m_threadsCount)
+		fromColumn += lengthRow;
+		if (fromColumn == matrixSize && id + 1 != m_threadsCount)
 		{
-			from_y = 1;
-			to_x += lengthByY;
-			from_x += lengthByY;
-			if (m_threadsCount - id - 1 <= matrix->basicMatrix.size() || to_x > matrix->basicMatrix.size())
+			fromColumn = 1;
+			toRow += lengthColumn;
+			fromRow += lengthColumn;
+			if (m_threadsCount - id - 1 <= matrixSize || toRow > matrixSize)
 			{
-				to_x = matrix->basicMatrix.size();
+				toRow = matrixSize;
 			}
 
 		}
 		if (id + 1 == m_threadsCount - 1)
 		{
-			to_y = matrix->basicMatrix.size();
+			toColumn = matrixSize;
 		}
 		if (!hThread.data()) std::cout << "Error!" << std::endl;
 	}
-	lengthByX = static_cast<size_t>(matrix->basicMatrix[0].size() / m_threadsCount);
-	if (matrix->basicMatrix[0].size() % m_threadsCount > 0)
+	lengthRow = static_cast<size_t>(matrixSizeForOneRow / m_threadsCount);
+	if (matrixSizeForOneRow % m_threadsCount > 0)
 	{
-		lengthByX = static_cast<size_t>(matrix->basicMatrix[0].size() / m_threadsCount) + 1;
+		lengthRow = static_cast<size_t>(matrixSizeForOneRow / m_threadsCount) + 1;
 	}
 
-	CalculateTransposedMatrix((PVOID)&RangeForMatrix(0, 0, matrix->basicMatrix.size(), lengthByX));
-	dw = WaitForMultipleObjects(static_cast<DWORD>(m_threadsCount - 1), hThread.data(), TRUE, INFINITE);
+	CalculateTransposedMatrix((PVOID)&RangeForMatrix(0, 0, matrix->basicMatrix.size(), lengthRow));
+	WaitForMultipleObjects(static_cast<DWORD>(m_threadsCount - 1), hThread.data(), TRUE, INFINITE);
 }
