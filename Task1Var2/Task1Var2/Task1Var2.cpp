@@ -34,6 +34,7 @@ int main(int argc, char * argv[])
 	unsigned int  start_time = clock();
 	CMatrixParallel matrixParallel(threadsCount);
 	matrix1 = matrixParallel.GetInverseMatrix();
+	Output(matrix1);
 	unsigned int end_time = clock();
 	unsigned int  search_time = end_time - start_time;
 	cout << "time proccess Parallel: " << float(search_time) / 1000 << endl;
@@ -42,14 +43,13 @@ int main(int argc, char * argv[])
 	cout << "======= Successively =======" << endl;
 	start_time = clock();
 	CMatrixSuccessively matrixSuccessively(matrixParallel.m_matrix.base);
-	matrix2 = matrixParallel.GetInverseMatrix();
-	//Output(matrix2);
+	matrix2 = matrixSuccessively.GetInverseMatrix();
+	Output(matrix1);
 	end_time = clock();
 	search_time = end_time - start_time;
 	cout << "time proccess Successively: " << float(search_time) / 1000 << endl << endl << endl;
 	cout << "======================================" << endl;
 	cout << "======= Inverse Matrix =======" << endl;
-	Output(matrix1);
 	return 0;
 }
 

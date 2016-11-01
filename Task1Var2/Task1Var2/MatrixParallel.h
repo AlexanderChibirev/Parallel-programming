@@ -10,9 +10,7 @@ public:
 	Matrix GetInverseMatrix() override;
 	MatrixData m_matrix;
 private:
-	void CalculateMatrixCofactors();
-	void CalculateMatrixMinors();
-	void CalculateTransposedMatrix();
+	void CalculateComponents(int type);
 	static float GetDeterminantMatrix(Matrix matrix);
 	static DWORD WINAPI CalculateMatrixCofactors(PVOID pvParam);
 	static DWORD WINAPI CalculateMatrixMinors(PVOID pvParam);
