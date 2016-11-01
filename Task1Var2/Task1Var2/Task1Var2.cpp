@@ -34,8 +34,8 @@ int main(int argc, char * argv[])
 	cout << "======= Inverse Matrix =======" << endl;
 	cout << "========  Parallel =========" << endl;
 	unsigned int  start_time = clock();
-	CMatrixParallel matrixParallel(threadsCount, matrixData);
-	matrix1 = matrixParallel.GetInverseMatrix();
+	CMatrixInverseParallel matrixInverseParallel(threadsCount, matrixData);
+	matrix1 = matrixInverseParallel.GetInverseMatrix();
 	Output(matrix1);
 	unsigned int end_time = clock();
 	unsigned int  search_time = end_time - start_time;
@@ -45,8 +45,8 @@ int main(int argc, char * argv[])
 	cout << "======= Inverse Matrix =======" << endl;
 	cout << "=======  Successively =======" << endl;
 	start_time = clock();
-	CMatrixSuccessively matrixSuccessively(matrixData.basicMatrix);
-	matrix2 = matrixSuccessively.GetInverseMatrix();
+	CMatrixInverseSuccessively matrixInverseSuccessively(matrixData.basicMatrix);
+	matrix2 = matrixInverseSuccessively.GetInverseMatrix();
 	Output(matrix2);
 	end_time = clock();
 	search_time = end_time - start_time;

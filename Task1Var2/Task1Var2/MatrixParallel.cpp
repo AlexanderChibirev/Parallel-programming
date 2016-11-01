@@ -2,7 +2,7 @@
 #include "MatrixParallel.h"
 #include "RangeForMatrix.h"
 
-void Cofactors(CMatrixParallel * matrix, RangeForMatrix& data)
+void Cofactors(CMatrixInverseParallel * matrix, RangeForMatrix& data)
 {
 	for (size_t i = data.m_fromRow; i != data.m_toRow; ++i)
 	{
@@ -13,7 +13,7 @@ void Cofactors(CMatrixParallel * matrix, RangeForMatrix& data)
 	}
 }
 
-void Transposed(CMatrixParallel * matrix, RangeForMatrix& data)
+void Transposed(CMatrixInverseParallel * matrix, RangeForMatrix& data)
 {
 	for (size_t i = data.m_fromRow; i != data.m_toRow; ++i)
 	{
@@ -24,7 +24,7 @@ void Transposed(CMatrixParallel * matrix, RangeForMatrix& data)
 	}
 }
 
-void Minors(CMatrixParallel * matrix, RangeForMatrix& data)
+void Minors(CMatrixInverseParallel * matrix, RangeForMatrix& data)
 {
 	Matrix copyMatrix = matrix->GetMatrixData().basicMatrix;
 	for (size_t i = data.m_fromRow; i != data.m_toRow; ++i)
@@ -36,17 +36,17 @@ void Minors(CMatrixParallel * matrix, RangeForMatrix& data)
 	}
 }
 
-void CMatrixParallel::CalculateMatrixCofactors(int i, int j)
+void CMatrixInverseParallel::CalculateMatrixCofactors(int i, int j)
 {
 	m_matrixData.minorsMatrix[i][j] *= (int)pow(-1, int(i) + int(j) + 2);
 }
 
-void CMatrixParallel::CalculateTransposedMatrix(int i, int j)
+void CMatrixInverseParallel::CalculateTransposedMatrix(int i, int j)
 {
 	m_matrixData.basicMatrix[j][i] = m_matrixData.minorsMatrix[i][j];
 }
 
-void CMatrixParallel::CalculateMatrixMinors(Matrix &matrix, int i, int j)
+void CMatrixInverseParallel::CalculateMatrixMinors(Matrix &matrix, int i, int j)
 {
 	matrix.erase(matrix.begin() + i);
 	for (size_t k = 0; k != matrix.size(); ++k)
@@ -59,7 +59,7 @@ void CMatrixParallel::CalculateMatrixMinors(Matrix &matrix, int i, int j)
 }
 
 
-float CMatrixParallel::GetDeterminantMatrix(Matrix matrix)
+float CMatrixInverseParallel::GetDeterminantMatrix(Matrix matrix)
 {
 	float result = 0.f;
 	int count = 1;
@@ -86,7 +86,7 @@ float CMatrixParallel::GetDeterminantMatrix(Matrix matrix)
 	return result;
 }
 
-CMatrixParallel::CMatrixParallel(size_t threadsCount, MatrixData matrixData)
+CMatrixInverseParallel::CMatrixInverseParallel(size_t threadsCount, MatrixData matrixData)
 	: m_threadsCount(threadsCount)
 	, m_matrixData(matrixData)
 
@@ -94,7 +94,7 @@ CMatrixParallel::CMatrixParallel(size_t threadsCount, MatrixData matrixData)
 
 }
 
-Matrix CMatrixParallel::GetInverseMatrix()
+Matrix CMatrixInverseParallel::GetInverseMatrix()
 {
 	float number = (GetDeterminantMatrix(m_matrixData.basicMatrix));
 	CalculateComponents(CalculateMinors);
@@ -118,12 +118,12 @@ Matrix CMatrixParallel::GetInverseMatrix()
 	return m_matrixData.basicMatrix;
 }
 
-MatrixData CMatrixParallel::GetMatrixData()
+MatrixData CMatrixInverseParallel::GetMatrixData()
 {
 	return m_matrixData;
 }
 
-void CMatrixParallel::CalculateComponents(TypeCalculate type)
+void CMatrixInverseParallel::CalculateComponents(TypeCalculate type)
 {
 	std::vector<std::thread> hTreads;
 	size_t matrixSizeForOneRow = m_matrixData.basicMatrix[0].size();

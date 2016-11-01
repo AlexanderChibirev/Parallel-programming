@@ -3,14 +3,14 @@
 #include "RangeForMatrix.h"
 
 using namespace std;
-CMatrixSuccessively::CMatrixSuccessively(std::vector<std::vector<float>> matrix)
+CMatrixInverseSuccessively::CMatrixInverseSuccessively(std::vector<std::vector<float>> matrix)
 	:m_baseMatrix(matrix)
 {
 		m_matrixSize = matrix.size();
 }
 
 
-float CMatrixSuccessively::GetDeterminant() 
+float CMatrixInverseSuccessively::GetDeterminant() 
 {
 	float det = 0;
 	std::vector<std::vector<float>> pd = m_baseMatrix;
@@ -39,11 +39,11 @@ float CMatrixSuccessively::GetDeterminant()
 	default:
 	{
 		int DIM = m_matrixSize;
-		std::vector<CMatrixSuccessively> temp;
+		std::vector<CMatrixInverseSuccessively> temp;
 		for (int i = 0; i < DIM; i++)
 		{
 			std::vector<std::vector<float>> matrix(DIM - 1, std::vector<float>(DIM - 1));
-			temp.push_back(CMatrixSuccessively(matrix));
+			temp.push_back(CMatrixInverseSuccessively(matrix));
 		}
 		for (int k = 0; k < DIM; k++)
 		{
@@ -72,7 +72,7 @@ float CMatrixSuccessively::GetDeterminant()
 	}
 }
 
-float CMatrixSuccessively::SearchDetThenMatrixSizeEqualThree(std::vector<std::vector<float>> &pd)
+float CMatrixInverseSuccessively::SearchDetThenMatrixSizeEqualThree(std::vector<std::vector<float>> &pd)
 {
 	float det = (pd[0][0] * pd[1][1] * pd[2][2] + pd[0][1] * pd[1][2] * pd[2][0] + pd[0][2] * pd[1][0] * pd[2][1]);
 	det = det - pd[0][0] * pd[1][2] * pd[2][1];
@@ -81,13 +81,13 @@ float CMatrixSuccessively::SearchDetThenMatrixSizeEqualThree(std::vector<std::ve
 	return det;
 }
 
-float CMatrixSuccessively::SearchDetThenMatrixSizeEqualFour()
+float CMatrixInverseSuccessively::SearchDetThenMatrixSizeEqualFour()
 {
-	std::vector<CMatrixSuccessively*> temp(4);
+	std::vector<CMatrixInverseSuccessively*> temp(4);
 	for (int i = 0; i < 4; i++)
 	{
 		std::vector<std::vector<float>> matrix(3, std::vector<float>(3));
-		temp[i] = new CMatrixSuccessively(matrix);
+		temp[i] = new CMatrixInverseSuccessively(matrix);
 	}
 	for (int k = 0; k < 4; k++)
 	{
@@ -110,13 +110,13 @@ float CMatrixSuccessively::SearchDetThenMatrixSizeEqualFour()
 	return det;
 }
 
-float CMatrixSuccessively::SearchDetThenMatrixSizeEqualFive()
+float CMatrixInverseSuccessively::SearchDetThenMatrixSizeEqualFive()
 {
-	CMatrixSuccessively *temp[5];
+	CMatrixInverseSuccessively *temp[5];
 	for (int i = 0; i < 5; i++)
 	{
 		std::vector<std::vector<float>> matrix(4, std::vector<float>(4));
-		temp[i] = new CMatrixSuccessively(matrix);
+		temp[i] = new CMatrixInverseSuccessively(matrix);
 	}
 	for (int k = 0; k < 5; k++)
 	{
@@ -139,10 +139,10 @@ float CMatrixSuccessively::SearchDetThenMatrixSizeEqualFive()
 	return det;
 }
 
-CMatrixSuccessively CMatrixSuccessively::CoFactor()
+CMatrixInverseSuccessively CMatrixInverseSuccessively::CoFactor()
 {
 	std::vector<std::vector<float>> cof(m_matrixSize, std::vector<float>(m_matrixSize));
-	CMatrixSuccessively cofactor(cof);
+	CMatrixInverseSuccessively cofactor(cof);
 	if (m_matrixSize < 2)
 		return cofactor;
 	else if (m_matrixSize == 2)
@@ -156,15 +156,15 @@ CMatrixSuccessively CMatrixSuccessively::CoFactor()
 	else if (m_matrixSize >= 3)
 	{
 		int DIM = m_matrixSize;
-		CMatrixSuccessively ***temp = new CMatrixSuccessively**[DIM];
+		CMatrixInverseSuccessively ***temp = new CMatrixInverseSuccessively**[DIM];
 		for (int i = 0; i < DIM; i++)
-			temp[i] = new CMatrixSuccessively*[DIM];
+			temp[i] = new CMatrixInverseSuccessively*[DIM];
 		
 		for (int i = 0; i < DIM; i++)
 			for (int j = 0; j < DIM; j++)
 			{
 				std::vector<std::vector<float>> newMatrix(m_matrixSize - 1, std::vector<float>(m_matrixSize - 1));
-				temp[i][j] = new CMatrixSuccessively(newMatrix);
+				temp[i][j] = new CMatrixInverseSuccessively(newMatrix);
 			}
 		for (int k1 = 0; k1 < DIM; k1++)
 		{
@@ -213,12 +213,12 @@ CMatrixSuccessively CMatrixSuccessively::CoFactor()
 	return cofactor;
 }
 
-std::vector<std::vector<float>> CMatrixSuccessively::GetInverseMatrix()
+std::vector<std::vector<float>> CMatrixInverseSuccessively::GetInverseMatrix()
 {
 	std::vector<std::vector<float>> cofM(m_matrixSize, std::vector<float>(m_matrixSize));
 	std::vector<std::vector<float>> invM(m_matrixSize, std::vector<float>(m_matrixSize));
-	CMatrixSuccessively cofactorMatrix(cofM);
-	CMatrixSuccessively inverseMatrix(invM);
+	CMatrixInverseSuccessively cofactorMatrix(cofM);
+	CMatrixInverseSuccessively inverseMatrix(invM);
 	// to find out Determinant
 	float det = GetDeterminant();
 	cofactorMatrix = this->CoFactor();

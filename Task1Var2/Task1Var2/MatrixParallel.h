@@ -11,10 +11,10 @@ enum TypeCalculate
 	CalculateTransposed
 };
 
-class CMatrixParallel : IMatrix
+class CMatrixInverseParallel : IMatrix
 {
 public:
-	CMatrixParallel(size_t threadsCount, MatrixData matrixData);
+	CMatrixInverseParallel(size_t threadsCount, MatrixData matrixData);
 	Matrix GetInverseMatrix() override;
 	MatrixData GetMatrixData();
 	float GetDeterminantMatrix(Matrix matrix);

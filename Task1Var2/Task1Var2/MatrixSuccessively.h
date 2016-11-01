@@ -1,14 +1,14 @@
 #pragma once
 #include "IMatrix.h"
 
-class CMatrixSuccessively : IMatrix
+class CMatrixInverseSuccessively : IMatrix
 {
 
 public:
-	CMatrixSuccessively(std::vector<std::vector<float>> matrix);
+	CMatrixInverseSuccessively(std::vector<std::vector<float>> matrix);
 	std::vector<std::vector<float>> GetInverseMatrix() override;
 private:
-	CMatrixSuccessively CoFactor();
+	CMatrixInverseSuccessively CoFactor();
 	float GetDeterminant();
 	float SearchDetThenMatrixSizeEqualThree(std::vector<std::vector<float>> &pd);
 	float SearchDetThenMatrixSizeEqualFour();
