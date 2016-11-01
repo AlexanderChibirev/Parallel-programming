@@ -1,21 +1,29 @@
 #pragma once
 #include "IMatrix.h"
+#include <memory>
+#include <thread>
 
 
+enum TypeCalculate
+{
+	CalculateCofactors,
+	CalculateMinors,
+	CalculateTransposed
+};
 
 class CMatrixParallel : IMatrix
 {
 public:
-	CMatrixParallel(size_t threadsCount);
+	CMatrixParallel(size_t threadsCount, MatrixData matrixData);
 	Matrix GetInverseMatrix() override;
-	MatrixData m_matrix;
+	MatrixData GetMatrixData();
+	float GetDeterminantMatrix(Matrix matrix);
+	void CalculateMatrixMinors(Matrix &copyMatrix, int i, int j);
+	void CalculateMatrixCofactors(int i, int j);
+	void CalculateTransposedMatrix(int i, int j);
 private:
-	void CalculateComponents(int type);
-	static float GetDeterminantMatrix(Matrix matrix);
-	static DWORD WINAPI CalculateMatrixCofactors(PVOID pvParam);
-	static DWORD WINAPI CalculateMatrixMinors(PVOID pvParam);
-	static DWORD WINAPI CalculateTransposedMatrix(PVOID pvParam);
+	void CalculateComponents(TypeCalculate type);
 private:
 	size_t m_threadsCount;
-	
+	MatrixData m_matrixData;
 };

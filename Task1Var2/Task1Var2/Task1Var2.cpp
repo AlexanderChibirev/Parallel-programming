@@ -28,11 +28,12 @@ int main(int argc, char * argv[])
 //	size_t threadsCount = std::atoi(argv[1]);
 	vector<vector<float>> matrix1;
 	vector<vector<float>> matrix2;
-	size_t threadsCount = 1;
+	MatrixData matrixData;
+	size_t threadsCount = 5;
 	cout << "======================================" << endl;
 	cout << "======== Parallel =========" << endl;
 	unsigned int  start_time = clock();
-	CMatrixParallel matrixParallel(threadsCount);
+	CMatrixParallel matrixParallel(threadsCount, matrixData);
 	matrix1 = matrixParallel.GetInverseMatrix();
 	Output(matrix1);
 	unsigned int end_time = clock();
@@ -42,9 +43,9 @@ int main(int argc, char * argv[])
 	cout << "======================================" << endl;
 	cout << "======= Successively =======" << endl;
 	start_time = clock();
-	CMatrixSuccessively matrixSuccessively(matrixParallel.m_matrix.base);
+	CMatrixSuccessively matrixSuccessively(matrixData.basicMatrix);
 	matrix2 = matrixSuccessively.GetInverseMatrix();
-	Output(matrix1);
+	Output(matrix2);
 	end_time = clock();
 	search_time = end_time - start_time;
 	cout << "time proccess Successively: " << float(search_time) / 1000 << endl << endl << endl;
