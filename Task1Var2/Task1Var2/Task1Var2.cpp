@@ -29,9 +29,10 @@ int main(int argc, char * argv[])
 	vector<vector<float>> matrix1;
 	vector<vector<float>> matrix2;
 	MatrixData matrixData;
-	size_t threadsCount = 5;
+	size_t threadsCount = 1;
 	cout << "======================================" << endl;
-	cout << "======== Parallel =========" << endl;
+	cout << "======= Inverse Matrix =======" << endl;
+	cout << "========  Parallel =========" << endl;
 	unsigned int  start_time = clock();
 	CMatrixParallel matrixParallel(threadsCount, matrixData);
 	matrix1 = matrixParallel.GetInverseMatrix();
@@ -41,7 +42,8 @@ int main(int argc, char * argv[])
 	cout << "time proccess Parallel: " << float(search_time) / 1000 << endl;
 	cout << "=================================" << std::endl;
 	cout << "======================================" << endl;
-	cout << "======= Successively =======" << endl;
+	cout << "======= Inverse Matrix =======" << endl;
+	cout << "=======  Successively =======" << endl;
 	start_time = clock();
 	CMatrixSuccessively matrixSuccessively(matrixData.basicMatrix);
 	matrix2 = matrixSuccessively.GetInverseMatrix();
@@ -50,7 +52,6 @@ int main(int argc, char * argv[])
 	search_time = end_time - start_time;
 	cout << "time proccess Successively: " << float(search_time) / 1000 << endl << endl << endl;
 	cout << "======================================" << endl;
-	cout << "======= Inverse Matrix =======" << endl;
 	return 0;
 }
 

@@ -2,7 +2,6 @@
 #include "MatrixParallel.h"
 #include "RangeForMatrix.h"
 
-
 void Cofactors(CMatrixParallel * matrix, RangeForMatrix& data)
 {
 	for (size_t i = data.m_fromRow; i != data.m_toRow; ++i)
@@ -39,7 +38,7 @@ void Minors(CMatrixParallel * matrix, RangeForMatrix& data)
 
 void CMatrixParallel::CalculateMatrixCofactors(int i, int j)
 {
-	 m_matrixData.minorsMatrix[i][j] *= (int)pow(-1, int(i) + int(j) + 2);
+	m_matrixData.minorsMatrix[i][j] *= (int)pow(-1, int(i) + int(j) + 2);
 }
 
 void CMatrixParallel::CalculateTransposedMatrix(int i, int j)
@@ -90,9 +89,9 @@ float CMatrixParallel::GetDeterminantMatrix(Matrix matrix)
 CMatrixParallel::CMatrixParallel(size_t threadsCount, MatrixData matrixData)
 	: m_threadsCount(threadsCount)
 	, m_matrixData(matrixData)
-	
+
 {
-	
+
 }
 
 Matrix CMatrixParallel::GetInverseMatrix()
@@ -101,7 +100,7 @@ Matrix CMatrixParallel::GetInverseMatrix()
 	CalculateComponents(CalculateMinors);
 	CalculateComponents(CalculateCofactors);
 	CalculateComponents(CalculateTransposed);
-	
+
 	for (auto &row : m_matrixData.basicMatrix)
 	{
 		for (auto &column : row)
@@ -154,17 +153,17 @@ void CMatrixParallel::CalculateComponents(TypeCalculate type)
 	for (size_t id = 1; id != m_threadsCount; ++id)
 	{
 		toColumn = lengthRow + fromColumn >= matrixSize ? matrixSize : lengthRow + fromColumn;
-		switch (type) 
+		switch (type)
 		{
-			case CalculateMinors:
-				hTreads.push_back(std::thread(Minors, this, RangeForMatrix(fromRow, fromColumn, toRow, toColumn)));
-				break;
-			case CalculateCofactors:
-				hTreads.push_back(std::thread(Cofactors, this, RangeForMatrix(fromRow, fromColumn, toRow, toColumn)));
-				break;
-			case CalculateTransposed:
-				hTreads.push_back(std::thread(Transposed, this, RangeForMatrix(fromRow, fromColumn, toRow, toColumn)));
-				break;
+		case CalculateMinors:
+			hTreads.push_back(std::thread(Minors, this, RangeForMatrix(fromRow, fromColumn, toRow, toColumn)));
+			break;
+		case CalculateCofactors:
+			hTreads.push_back(std::thread(Cofactors, this, RangeForMatrix(fromRow, fromColumn, toRow, toColumn)));
+			break;
+		case CalculateTransposed:
+			hTreads.push_back(std::thread(Transposed, this, RangeForMatrix(fromRow, fromColumn, toRow, toColumn)));
+			break;
 		}
 		if (m_threadsCount - id - 1 == matrixSize - toColumn + 1)
 		{

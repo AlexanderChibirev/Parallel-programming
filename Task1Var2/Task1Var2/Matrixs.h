@@ -8,5 +8,4 @@ struct MatrixData
 	Matrix basicMatrix;
 	Matrix minorsMatrix;
 	Matrix copyBasicMatrix;
-	Matrix base;
 };
